@@ -444,7 +444,7 @@ const AircraftDetails = ({
                   <div className="bg-gray-100 rounded-md p-4">
                     <h4 className="font-medium mb-2">Base Locations</h4>
                     <div className="flex flex-wrap gap-2">
-                      {aircraft.base_locations && aircraft.base_locations.map((location: string, index: number) => (
+                      {aircraft.base_location && aircraft.base_location.map((location: string, index: number) => (
                         <Badge key={index} variant="outline">
                           {location}
                         </Badge>

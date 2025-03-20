@@ -98,7 +98,7 @@ const AircraftForm = ({
       // Set selected capabilities, equipment, and locations
       setSelectedCapabilities(aircraft.capabilities || []);
       setSelectedEquipment(aircraft.special_equipment || []);
-      setSelectedLocations(aircraft.base_locations || []);
+      setSelectedLocations(aircraft.base_location || []);
       
       // Set image preview if available
       if (aircraft.imageUrl) {
@@ -233,7 +233,7 @@ const AircraftForm = ({
   
   const handleAddCapability = () => {
     if (newCapability.trim()) {
-      if (!capabilities.some(cap => cap.name === newCapability.trim())) {
+      if (!capabilities.some(cap => cap.value === newCapability.trim())) {
         onAddCapability(newCapability.trim());
       }
       if (!selectedCapabilities.includes(newCapability.trim())) {
@@ -252,7 +252,7 @@ const AircraftForm = ({
   
   const handleAddEquipment = () => {
     if (newEquipment.trim()) {
-      if (!equipment.some(eq => eq.name === newEquipment.trim())) {
+      if (!equipment.some(eq => eq.value === newEquipment.trim())) {
         onAddEquipment(newEquipment.trim());
       }
       if (!selectedEquipment.includes(newEquipment.trim())) {
@@ -264,7 +264,7 @@ const AircraftForm = ({
   
   const handleAddLocation = () => {
     if (newLocation.trim()) {
-      if (!locations.some(loc => loc.name === newLocation.trim())) {
+      if (!locations.some(loc => loc.value === newLocation.trim())) {
         onAddLocation(newLocation.trim());
       }
       if (!selectedLocations.includes(newLocation.trim())) {
@@ -436,25 +436,27 @@ const AircraftForm = ({
                   {formErrors.capabilities && <p className="text-destructive text-sm mb-2">{formErrors.capabilities}</p>}
                   
                   <div className="flex gap-2 items-center">
-                    <Select onValueChange={handleSelectCapability}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select capability" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {capabilities
-                          .filter(cap => !selectedCapabilities.includes(cap.name))
-                          .map(capability => (
-                            <SelectItem key={capability.id} value={capability.name}>
-                              {capability.name}
-                            </SelectItem>
-                          ))
-                        }
-                      </SelectContent>
-                    </Select>
+                    <div className="w-2/5">
+                      <Select onValueChange={handleSelectCapability}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select capability" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {capabilities
+                            .filter(cap => !selectedCapabilities.includes(cap.value))
+                            .map(capability => (
+                              <SelectItem key={capability.id} value={capability.value}>
+                                {capability.value}
+                              </SelectItem>
+                            ))
+                          }
+                        </SelectContent>
+                      </Select>
+                    </div>
                     
                     <span className="mx-2">or</span>
                     
-                    <div className="flex-1 flex gap-2">
+                    <div className="w-3/5 flex gap-2">
                       <Input 
                         placeholder="Add new capability" 
                         value={newCapability}
@@ -496,25 +498,27 @@ const AircraftForm = ({
                   {formErrors.locations && <p className="text-destructive text-sm mb-2">{formErrors.locations}</p>}
                   
                   <div className="flex gap-2 items-center">
-                    <Select onValueChange={handleSelectLocation}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select location" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {locations
-                          .filter(loc => !selectedLocations.includes(loc.name))
-                          .map(location => (
-                            <SelectItem key={location.id} value={location.name}>
-                              {location.name}
-                            </SelectItem>
-                          ))
-                        }
-                      </SelectContent>
-                    </Select>
+                    <div className="w-2/5">
+                      <Select onValueChange={handleSelectLocation}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {locations
+                            .filter(loc => !selectedLocations.includes(loc.value))
+                            .map(location => (
+                              <SelectItem key={location.id} value={location.value}>
+                                {location.value}
+                              </SelectItem>
+                            ))
+                          }
+                        </SelectContent>
+                      </Select>
+                    </div>
                     
                     <span className="mx-2">or</span>
                     
-                    <div className="flex-1 flex gap-2">
+                    <div className="w-3/5 flex gap-2">
                       <Input 
                         placeholder="Add new location" 
                         value={newLocation}
@@ -553,25 +557,27 @@ const AircraftForm = ({
                   </div>
                   
                   <div className="flex gap-2 items-center">
-                    <Select onValueChange={handleSelectEquipment}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select equipment" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {equipment
-                          .filter(eq => !selectedEquipment.includes(eq.name))
-                          .map(item => (
-                            <SelectItem key={item.id} value={item.name}>
-                              {item.name}
-                            </SelectItem>
-                          ))
-                        }
-                      </SelectContent>
-                    </Select>
+                    <div className="w-2/5">
+                      <Select onValueChange={handleSelectEquipment}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select equipment" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {equipment
+                            .filter(eq => !selectedEquipment.includes(eq.value))
+                            .map(item => (
+                              <SelectItem key={item.id} value={item.value}>
+                                {item.value}
+                              </SelectItem>
+                            ))
+                          }
+                        </SelectContent>
+                      </Select>
+                    </div>
                     
                     <span className="mx-2">or</span>
                     
-                    <div className="flex-1 flex gap-2">
+                    <div className="w-3/5 flex gap-2">
                       <Input 
                         placeholder="Add new equipment" 
                         value={newEquipment}

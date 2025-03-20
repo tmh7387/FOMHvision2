@@ -18,7 +18,7 @@ const DEMO_AIRCRAFT = [
     registration: ['XU-168'],
     configuration: 'Executive configuration with 5 passenger seats and premium leather interior.',
     capabilities: ['Scenic/charter flights', 'Medevac', 'Light utility operations'],
-    base_locations: ['Phnom Penh International Airport'],
+    base_location: ['Phnom Penh International Airport'],
     special_equipment: ['Standard configuration'],
     imageUrl: '/api/placeholder/400/320',
     specifications: {
@@ -28,7 +28,7 @@ const DEMO_AIRCRAFT = [
       range: '710 km',
       service_ceiling: '5,182 m',
     },
-    maintenance: {
+            maintenance_info: {
       inspections: [
         { type: '100-Hour Inspection', interval: 'Every 100 flight hours' },
         { type: 'Annual Inspection', interval: 'Every 12 months' }
@@ -69,9 +69,9 @@ const EnhancedFleetGallery = () => {
       
       if (error) throw error;
       
+      console.log("Retrieved aircraft data:", data);
+      
       if (data && data.length > 0) {
-        console.log("Retrieved aircraft data:", data);
-        
         // Set image URLs directly from the database
         const aircraftWithImages = data.map(aircraft => ({
           ...aircraft,
@@ -120,9 +120,30 @@ const EnhancedFleetGallery = () => {
         throw new Error(capError?.message || eqError?.message || locError?.message);
       }
       
-      setCapabilities(capData || []);
-      setEquipment(eqData || []);
-      setLocations(locData || []);
+      console.log("Dropdown data retrieved from Supabase:");
+      console.log("Capabilities:", capData);
+      console.log("Equipment:", eqData);
+      console.log("Locations:", locData);
+      
+      // Add placeholder data if none exists in database
+      const capabilityData = capData && capData.length > 0 ? capData : [
+        { id: 'cap1', category: 'capability', value: 'VFR Operations' },
+        { id: 'cap2', category: 'capability', value: 'Scenic tours' }
+      ];
+      
+      const equipmentData = eqData && eqData.length > 0 ? eqData : [
+        { id: 'eq1', category: 'equipment', value: 'Wire Strike Protection' },
+        { id: 'eq2', category: 'equipment', value: 'Enhanced avionics' }
+      ];
+      
+      const locationData = locData && locData.length > 0 ? locData : [
+        { id: 'loc1', category: 'location', value: 'Main Heliport' },
+        { id: 'loc2', category: 'location', value: 'Hospital Helipad' }
+      ];
+      
+      setCapabilities(capabilityData);
+      setEquipment(equipmentData);
+      setLocations(locationData);
     } catch (error) {
       console.error("Error fetching reference data:", error);
       toast({
@@ -172,7 +193,7 @@ const EnhancedFleetGallery = () => {
             registration: formData.registration,
             configuration: formData.configuration,
             capabilities: formData.capabilities,
-            base_location: formData.baseLocations, // Using singular name to match DB
+            base_location: formData.baseLocations, // Field name in DB is singular
             special_equipment: formData.specialEquipment,
             image_url: imageUrl, // Changed from image_path to image_url to match DB schema
             specifications: {
@@ -182,10 +203,10 @@ const EnhancedFleetGallery = () => {
               range: formData.range,
               service_ceiling: formData.serviceCeiling
             },
-            maintenance: {
-              inspections: formData.inspections || [],
-              common_issues: formData.commonIssues ? formData.commonIssues.split('\n').filter(i => i.trim()) : []
-            }
+          maintenance: {
+            inspections: formData.inspections || [],
+            common_issues: formData.commonIssues ? formData.commonIssues.split('\n').filter(i => i.trim()) : []
+          }
           }
         ])
         .select();
@@ -265,29 +286,35 @@ const EnhancedFleetGallery = () => {
         console.log("New image uploaded successfully. URL:", imageUrl);
       }
       
+      // Prepare update payload
+      const updatePayload = {
+        type: formData.type,
+        registration: formData.registration,
+        configuration: formData.configuration,
+        capabilities: formData.capabilities,
+        base_location: formData.baseLocations, // Using singular name to match DB
+        special_equipment: formData.specialEquipment,
+        image_url: imageUrl,
+        specifications: {
+          passenger_capacity: formData.passengerCapacity,
+          max_takeoff_weight: formData.maxTakeoffWeight,
+          max_cruise_speed: formData.maxCruiseSpeed,
+          range: formData.range,
+          service_ceiling: formData.serviceCeiling
+        },
+        maintenance: {
+          inspections: formData.inspections || [],
+          common_issues: formData.commonIssues ? formData.commonIssues.split('\n').filter(i => i.trim()) : []
+        }
+      };
+      
+      console.log("Sending update with payload:", updatePayload);
+      console.log("Aircraft ID to update:", selectedAircraft.id);
+      
       // Update the aircraft record in Supabase
       const { data, error } = await supabase
         .from('aircraft')
-        .update({
-          type: formData.type,
-          registration: formData.registration,
-          configuration: formData.configuration,
-          capabilities: formData.capabilities,
-          base_location: formData.baseLocations, // Using singular name to match DB
-          special_equipment: formData.specialEquipment,
-          image_url: imageUrl, // Changed from image_path to image_url to match DB schema
-          specifications: {
-            passenger_capacity: formData.passengerCapacity,
-            max_takeoff_weight: formData.maxTakeoffWeight,
-            max_cruise_speed: formData.maxCruiseSpeed,
-            range: formData.range,
-            service_ceiling: formData.serviceCeiling
-          },
-          maintenance: {
-            inspections: formData.inspections || [],
-            common_issues: formData.commonIssues ? formData.commonIssues.split('\n').filter(i => i.trim()) : []
-          }
-        })
+        .update(updatePayload)
         .eq('id', selectedAircraft.id)
         .select();
       
@@ -321,39 +348,76 @@ const EnhancedFleetGallery = () => {
 
   const handleDeleteAircraft = async (aircraftId) => {
     try {
-      // Find the aircraft to get its image path
-      const aircraftToDelete = aircraft.find(a => a.id === aircraftId);
+      console.log("Attempting to delete aircraft with ID:", aircraftId);
+      console.log("Current aircraft state:", aircraft);
       
-      // Delete the image from storage if it exists
-      if (aircraftToDelete?.image_url) {
-        const urlParts = aircraftToDelete.image_url.split('/');
-        const fileName = urlParts[urlParts.length - 1];
-        
-        await supabase.storage
-          .from('aircraft-images')
-          .remove([fileName]);
+      // First, immediately update the UI by removing the aircraft from local state
+      setAircraft(prevState => {
+        console.log("Filtering aircraft with ID:", aircraftId);
+        // Use a string comparison for safety
+        return prevState.filter(a => String(a.id) !== String(aircraftId));
+      });
+      
+      // Find the aircraft to get its image path
+      const aircraftToDelete = aircraft.find(a => String(a.id) === String(aircraftId));
+      console.log("Aircraft to delete:", aircraftToDelete);
+      
+      if (!aircraftToDelete) {
+        console.warn(`Aircraft with ID ${aircraftId} not found in current state`);
+        // Continue anyway since we still want to attempt deletion from database
+      } else {
+        // Delete the image from storage if it exists
+        if (aircraftToDelete.image_url) {
+          try {
+            const urlParts = aircraftToDelete.image_url.split('/');
+            const fileName = urlParts[urlParts.length - 1];
+            console.log("Deleting image:", fileName);
+            
+            const { error: storageError } = await supabase.storage
+              .from('aircraft-images')
+              .remove([fileName]);
+              
+            if (storageError) {
+              console.error("Error deleting image:", storageError);
+              // Continue with deletion even if image removal fails
+            }
+          } catch (imageError) {
+            console.error("Error processing image deletion:", imageError);
+            // Continue with deletion even if image removal fails
+          }
+        }
       }
       
-      // Delete the aircraft record
-      const { error } = await supabase
+      // Delete the aircraft record from database
+      console.log("Sending delete request for aircraft ID:", aircraftId);
+      
+      // Convert to string for safe comparison
+      const aircraftIdStr = String(aircraftId);
+      
+      const { data, error } = await supabase
         .from('aircraft')
         .delete()
-        .eq('id', aircraftId);
+        .eq('id', aircraftIdStr)
+        .select();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase delete error:", error);
+        throw error;
+      }
       
+      console.log("Delete response:", data);
+      
+      // Show success message
       toast({
         title: "Aircraft deleted",
         description: "The aircraft has been removed from the fleet.",
       });
       
       // If the deleted aircraft was selected, clear the selection
-      if (selectedAircraft?.id === aircraftId) {
+      if (selectedAircraft && String(selectedAircraft.id) === String(aircraftId)) {
         setSelectedAircraft(null);
         setIsDetailsOpen(false);
       }
-      
-      fetchAircraftData(); // Refresh the aircraft list
       
     } catch (error) {
       console.error("Error deleting aircraft:", error);
@@ -448,9 +512,11 @@ const EnhancedFleetGallery = () => {
                   <Button 
                     size="icon" 
                     variant="ghost" 
-                    className="text-destructive hover:text-destructive"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     onClick={(e) => {
                       e.stopPropagation();
+                      e.preventDefault();
+                      console.log("Delete button clicked for aircraft:", aircraft.id);
                       handleDeleteAircraft(aircraft.id);
                     }}
                   >
